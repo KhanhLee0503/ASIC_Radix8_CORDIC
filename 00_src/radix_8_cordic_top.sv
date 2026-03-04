@@ -1,0 +1,288 @@
+module radix_8_cordic_top(
+    input logic [31:0] x_in,    //X-Axis Format is FXP(32,24)
+    input logic [31:0] y_in,    //Y-Axis Format is FXP(32,24)
+    input logic [31:0] z_in,    //Angle Format is FXP(32,24)
+
+    output logic [31:0] x_sum,
+    output logic [31:0] x_carry,
+
+    output logic [31:0] y_sum,
+    output logic [31:0] y_carry,
+
+    output logic [31:0] angle_sum,
+    output logic [31:0] angle_carry
+);
+
+
+//---------------First Stage Signals--------------
+logic [31:0] x_sum_1to2;
+logic [31:0] x_carry_1to2;
+
+logic [31:0] y_sum_1to2;
+logic [31:0] y_carry_1to2;
+
+logic [31:0] angle_sum_1to2;
+logic [31:0] angle_carry_1to2;
+
+//---------------Second Stage Signals--------------
+logic [31:0] x_sum_2to3;
+logic [31:0] x_carry_2to3;
+
+logic [31:0] y_sum_2to3;
+logic [31:0] y_carry_2to3;
+
+logic [31:0] angle_sum_2to3;
+logic [31:0] angle_carry_2to3;
+
+//---------------Third Stage Signals--------------
+logic [31:0] x_sum_3to4;
+logic [31:0] x_carry_3to4;
+
+logic [31:0] y_sum_3to4;
+logic [31:0] y_carry_3to4;
+
+logic [31:0] angle_sum_3to4;
+logic [31:0] angle_carry_3to4;
+
+//---------------Fourth Stage Signals--------------
+logic [31:0] x_sum_4to5;
+logic [31:0] x_carry_4to5;
+
+logic [31:0] y_sum_4to5;
+logic [31:0] y_carry_4to5;
+
+logic [31:0] angle_sum_4to5;
+logic [31:0] angle_carry_4to5;
+
+//---------------Fifth Stage Signals--------------
+logic [31:0] x_sum_5to6;
+logic [31:0] x_carry_5to6;
+
+logic [31:0] y_sum_5to6;
+logic [31:0] y_carry_5to6;
+
+logic [31:0] angle_sum_5to6;
+logic [31:0] angle_carry_5to6;
+
+//---------------Sixth Stage Signals--------------
+logic [31:0] x_sum_6to7;
+logic [31:0] x_carry_6to7;
+
+logic [31:0] y_sum_6to7;
+logic [31:0] y_carry_6to7;
+
+logic [31:0] angle_sum_6to7;
+logic [31:0] angle_carry_6to7;
+
+//---------------Seventh Stage Signals--------------
+logic [31:0] x_sum_7to8;
+logic [31:0] x_carry_7to8;
+
+logic [31:0] y_sum_7to8;
+logic [31:0] y_carry_7to8;
+
+logic [31:0] angle_sum_7to8;
+logic [31:0] angle_carry_7to8;
+
+first_micro_rotation first_iteration(
+    .x_in(x_in),
+    .y_in(y_in),
+    .z_in(z_in),
+
+    .x_sum(x_sum_1to2),
+    .x_carry(x_carry_1to2),
+
+    .y_sum(y_sum_1to2),
+    .y_carry(y_carry_1to2),
+
+    .angle_sum(angle_sum_1to2),
+    .angle_carry(angle_carry_1to2)
+
+);
+
+second_micro_rotation second_iteration(
+   
+    //Input Formats are the same as the output formats for each respective axis from the first micro-rotation module
+  
+    .x_sum_in(x_sum_1to2),    //X-Axis Format is FXP(32,24)
+    .x_carry_in(x_carry_1to2),
+   
+    .y_sum_in(y_sum_1to2), //Y-Axis Format is FXP(32,24)
+    .y_carry_in(y_carry_1to2),
+   
+    .z_sum_in(angle_sum_1to2), //Angle Format is FXP(32,24)
+    .z_carry_in(angle_carry_1to2),
+   
+    //Output Formats are the same as the input formats for each respective axis 
+ 
+    .x_sum_out(x_sum_2to3),
+    .x_carry_out(x_carry_2to3),
+
+    .y_sum_out(y_sum_2to3),
+    .y_carry_out(y_carry_2to3),
+
+    .z_sum_out(angle_sum_2to3),
+    .z_carry_out(angle_carry_2to3)
+
+);
+
+
+third_micro_rotation third_iteration(
+   
+    //Input Formats are the same as the output formats for each respective axis from the first micro-rotation module
+  
+    .x_sum_in(x_sum_2to3),    //X-Axis Format is FXP(32,24)
+    .x_carry_in(x_carry_2to3),
+   
+    .y_sum_in(y_sum_2to3), //Y-Axis Format is FXP(32,24)
+    .y_carry_in(y_carry_2to3),
+   
+    .z_sum_in(angle_sum_2to3), //Angle Format is FXP(32,24)
+    .z_carry_in(angle_carry_2to3),
+   
+    //Output Formats are the same as the input formats for each respective axis 
+ 
+    .x_sum_out(x_sum_3to4),
+    .x_carry_out(x_carry_3to4),
+
+    .y_sum_out(y_sum_3to4),
+    .y_carry_out(y_carry_3to4),
+
+    .z_sum_out(angle_sum_3to4),
+    .z_carry_out(angle_carry_3to4)
+
+);
+
+
+fourth_micro_rotation fourth_iteration(
+   
+    //Input Formats are the same as the output formats for each respective axis from the first micro-rotation module
+  
+    .x_sum_in(x_sum_3to4),    //X-Axis Format is FXP(32,24)
+    .x_carry_in(x_carry_3to4),
+   
+    .y_sum_in(y_sum_3to4), //Y-Axis Format is FXP(32,24)
+    .y_carry_in(y_carry_3to4),
+   
+    .z_sum_in(angle_sum_3to4), //Angle Format is FXP(32,24)
+    .z_carry_in(angle_carry_3to4),
+   
+    //Output Formats are the same as the input formats for each respective axis 
+ 
+    .x_sum_out(x_sum_4to5),
+    .x_carry_out(x_carry_4to5),
+
+    .y_sum_out(y_sum_4to5),
+    .y_carry_out(y_carry_4to5),
+
+    .z_sum_out(angle_sum_4to5),
+    .z_carry_out(angle_carry_4to5)
+);
+
+
+fifth_micro_rotation fifth_iteration(
+   
+    //Input Formats are the same as the output formats for each respective axis from the first micro-rotation module
+  
+    .x_sum_in(x_sum_4to5),    //X-Axis Format is FXP(32,24)
+    .x_carry_in(x_carry_4to5),
+   
+    .y_sum_in(y_sum_4to5), //Y-Axis Format is FXP(32,24)
+    .y_carry_in(y_carry_4to5),
+   
+    .z_sum_in(angle_sum_4to5), //Angle Format is FXP(32,24)
+    .z_carry_in(angle_carry_4to5),
+   
+    //Output Formats are the same as the input formats for each respective axis 
+ 
+    .x_sum_out(x_sum_5to6),
+    .x_carry_out(x_carry_5to6),
+
+    .y_sum_out(y_sum_5to6),
+    .y_carry_out(y_carry_5to6),
+
+    .z_sum_out(angle_sum_5to6),
+    .z_carry_out(angle_carry_5to6)
+);
+
+
+sixth_micro_rotation sixth_iteration(
+   
+    //Input Formats are the same as the output formats for each respective axis from the first micro-rotation module
+  
+    .x_sum_in(x_sum_5to6),    //X-Axis Format is FXP(32,24)
+    .x_carry_in(x_carry_5to6),
+   
+    .y_sum_in(y_sum_5to6), //Y-Axis Format is FXP(32,24)
+    .y_carry_in(y_carry_5to6),
+   
+    .z_sum_in(angle_sum_5to6), //Angle Format is FXP(32,24)
+    .z_carry_in(angle_carry_5to6),
+   
+    //Output Formats are the same as the input formats for each respective axis 
+ 
+    .x_sum_out(x_sum_6to7),
+    .x_carry_out(x_carry_6to7),
+
+    .y_sum_out(y_sum_6to7),
+    .y_carry_out(y_carry_6to7),
+
+    .z_sum_out(angle_sum_6to7),
+    .z_carry_out(angle_carry_6to7)
+);
+
+
+seventh_micro_rotation seventh_iteration(
+   
+    //Input Formats are the same as the output formats for each respective axis from the first micro-rotation module
+  
+    .x_sum_in(x_sum_6to7),    //X-Axis Format is FXP(32,24)
+    .x_carry_in(x_carry_6to7),
+
+    .y_sum_in(y_sum_6to7), //Y-Axis Format is FXP(32,24)
+    .y_carry_in(y_carry_6to7),
+   
+    .z_sum_in(angle_sum_6to7), //Angle Format is FXP(32,24)
+    .z_carry_in(angle_carry_6to7),
+   
+    //Output Formats are the same as the input formats for each respective axis 
+ 
+    .x_sum_out(x_sum_7to8),
+    .x_carry_out(x_carry_7to8),
+
+    .y_sum_out(y_sum_7to8),
+    .y_carry_out(y_carry_7to8),
+
+    .z_sum_out(angle_sum_7to8),
+    .z_carry_out(angle_carry_7to8)
+);
+
+
+eighth_micro_rotation eighth_iteration(
+   
+    //Input Formats are the same as the output formats for each respective axis from the first micro-rotation module
+  
+    .x_sum_in(x_sum_7to8),    //X-Axis Format is FXP(32,24)
+    .x_carry_in(x_carry_7to8),
+
+    .y_sum_in(y_sum_7to8), //Y-Axis Format is FXP(32,24)
+    .y_carry_in(y_carry_7to8),
+   
+    .z_sum_in(angle_sum_7to8), //Angle Format is FXP(32,24)
+    .z_carry_in(angle_carry_7to8),
+   
+    //Output Formats are the same as the input formats for each respective axis 
+ 
+    .x_sum_out(x_sum),
+    .x_carry_out(x_carry),
+
+    .y_sum_out(y_sum),
+    .y_carry_out(y_carry),
+
+    .z_sum_out(angle_sum),
+    .z_carry_out(angle_carry)
+);
+
+
+
+endmodule
