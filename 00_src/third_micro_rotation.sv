@@ -12,7 +12,9 @@ module third_micro_rotation(
     input logic [31:0] z_carry_in,
    
     //Output Formats are the same as the input formats for each respective axis 
- 
+
+    output logic [2:0] select_function_2,
+
     output logic [31:0] x_sum_out,
     output logic [31:0] x_carry_out,
 
@@ -20,9 +22,8 @@ module third_micro_rotation(
     output logic [31:0] y_carry_out,
 
     output logic [31:0] z_sum_out,
-    output logic [31:0] z_carry_out,
+    output logic [31:0] z_carry_out
 
-    output logic [3:0] select_function_2
 );
 //--------------------Internal Signals--------------------//
 //*** CLA Angle Signals ***//
@@ -30,7 +31,7 @@ logic [31:0] z_sum_n;
 logic [31:0] angle_two;
 
 //*** Comparator Signals ***//
-logic [3:0] select_function;
+logic [3:0] select_function_pre;
 logic [31:0] angle_two_pre;
 
 //*** Shifter Signals ***//
@@ -76,17 +77,17 @@ CLA_32bit Angle_Adder(
 
 comparator_multi_iteration Comparator_Two(
     .data_in(angle_two[26:23]),
-    .select_function(select_function)
+    .select_function(select_function_pre)
 );
 
 angle_table_two Angle_Table_Two(
-    .select_function(select_function[2:0]),
+    .select_function(select_function_pre[2:0]),
     .angle_two(angle_two_pre)
 );
 
 two_complementer Two_Complementer_Angle (
     .data_in(angle_two_pre),
-    .enable(~select_function[3]), // Negate the carry input
+    .enable(~select_function_pre[3]), // Negate the carry input
     .data_out(angle_two_n)
 );
 
@@ -118,7 +119,7 @@ shifter Shifter_X_Sum (
     .data_in(x_sum_in),
 
     .sh_amt(5'h6),
-    .select_function(select_function[2:0]),
+    .select_function(select_function_pre[2:0]),
  
     .sum_out(x_sum_p1),
     .carry_out(x_sum_p2)
@@ -128,7 +129,7 @@ shifter Shifter_X_Carry (
     .data_in(x_carry_in),
 
     .sh_amt(5'h6),
-    .select_function(select_function[2:0]),
+    .select_function(select_function_pre[2:0]),
  
     .sum_out(x_carry_p1),
     .carry_out(x_carry_p2)
@@ -136,25 +137,25 @@ shifter Shifter_X_Carry (
 
 two_complementer Two_Complementer_X_Sum_P1 (
     .data_in(x_sum_p1),
-    .enable(select_function[3]), // Negate the carry input 
+    .enable(select_function_pre[3]), // Negate the carry input 
     .data_out(x_sum_p1_n)
 );
 
 two_complementer Two_Complementer_X_Sum_P2 (
     .data_in(x_sum_p2),
-    .enable(select_function[3]), // Negate the carry input 
+    .enable(select_function_pre[3]), // Negate the carry input 
     .data_out(x_sum_p2_n)
 );
 
 two_complementer Two_Complementer_X_Carry_P1 (
     .data_in(x_carry_p1),
-    .enable(select_function[3]), // Negate the carry input 
+    .enable(select_function_pre[3]), // Negate the carry input 
     .data_out(x_carry_p1_n)
 );
 
 two_complementer Two_Complementer_X_Carry_P2 (
     .data_in(x_carry_p2),
-    .enable(select_function[3]), // Negate the carry input 
+    .enable(select_function_pre[3]), // Negate the carry input 
     .data_out(x_carry_p2_n)
 );
 
@@ -175,7 +176,7 @@ shifter Shifter_Y_Sum (
     .data_in(y_sum_in),
 
     .sh_amt(5'h6),
-    .select_function(select_function[2:0]),
+    .select_function(select_function_pre[2:0]),
  
     .sum_out(y_sum_p1),
     .carry_out(y_sum_p2)
@@ -185,7 +186,7 @@ shifter Shifter_Y_Carry (
     .data_in(y_carry_in),
 
     .sh_amt(5'h6),
-    .select_function(select_function[2:0]),
+    .select_function(select_function_pre[2:0]),
  
     .sum_out(y_carry_p1),
     .carry_out(y_carry_p2)
@@ -193,28 +194,28 @@ shifter Shifter_Y_Carry (
 
 two_complementer Two_Complementer_Y_Sum_P1 (
     .data_in(y_sum_p1),
-    .enable(~select_function[3]), // Negate the carry input 
+    .enable(~select_function_pre[3]), // Negate the carry input 
     .data_out(y_sum_p1_n)
 );
 
 
 two_complementer Two_Complementer_Y_Sum_P2 (
     .data_in(y_sum_p2),
-    .enable(~select_function[3]), // Negate the carry input
+    .enable(~select_function_pre[3]), // Negate the carry input
     .data_out(y_sum_p2_n)
 );
 
 
 two_complementer Two_Complementer_Y_Carry_P1 (
     .data_in(y_carry_p1),
-    .enable(~select_function[3]), // Negate the carry input
+    .enable(~select_function_pre[3]), // Negate the carry input
     .data_out(y_carry_p1_n)
 );
 
 
 two_complementer Two_Complementer_Y_Carry_P2 (
     .data_in(y_carry_p2),
-    .enable(~select_function[3]), // Negate the carry input
+    .enable(~select_function_pre[3]), // Negate the carry input
     .data_out(y_carry_p2_n)
 ); 
      
@@ -231,6 +232,6 @@ CSA_6to2_32bit CSA_6to2_Y(
     .c_out(y_carry_out)
 );
 
-assign select_function_2 = select_function;
+assign select_function_2 = select_function_pre[2:0];
 
 endmodule

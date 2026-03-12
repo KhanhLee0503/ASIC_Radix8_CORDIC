@@ -3,6 +3,8 @@ module first_micro_rotation(
     input logic [31:0] y_in,    //Y-Axis Format is FXP(32,24)
     input logic [31:0] z_in,    //Angle Format is FXP(32,24)
 
+    output logic [2:0] select_function_0,
+
     output logic [31:0] x_sum,
     output logic [31:0] x_carry,
 
@@ -10,12 +12,11 @@ module first_micro_rotation(
     output logic [31:0] y_carry,
 
     output logic [31:0] angle_sum,
-    output logic [31:0] angle_carry,
+    output logic [31:0] angle_carry
     
-    output logic [3:0] select_function_0
 );
 
-logic [3:0] select_function;
+logic [3:0] select_function_pre;
 logic [31:0] angle_zero_out;
 logic [31:0] angle_zero_out_n;
 
@@ -26,14 +27,15 @@ logic [31:0] y0p1;
 logic [31:0] y0p2;
 logic [31:0] y0p1_n;
 logic [31:0] y0p2_n;
+
 //--------------------Computing Angle of Rotation--------------------//
 comparator_zero comparator_zero(
     .data_in(z_in[25:21]),
-    .select_function(select_function)
+    .select_function(select_function_pre)
 );
 
 angle_table_zero angle_table_zero(
-    .select_function(select_function[2:0]),
+    .select_function(select_function_pre[2:0]),
     .angle_zero(angle_zero_out)
 );
 
@@ -62,7 +64,7 @@ shifter shifter_x (
     .data_in(x_in),
 
     .sh_amt(5'h0),
-    .select_function(select_function[2:0]),
+    .select_function(select_function_pre[2:0]),
  
     .sum_out(x0p1),
     .carry_out(x0p2)
@@ -94,7 +96,7 @@ shifter shifter_y (
     .data_in(y_in),
 
     .sh_amt(5'h0),
-    .select_function(select_function[2:0]),
+    .select_function(select_function_pre[2:0]),
  
     .sum_out(y0p1),
     .carry_out(y0p2)
@@ -109,6 +111,6 @@ CSA_3to2_32bit CSA_Y (
     .c_out(y_carry)
 );
 
-assign select_function_0 = select_function;
+assign select_function_0 = select_function_pre[2:0];
 
 endmodule
