@@ -15,6 +15,15 @@ module radix_8_cordic_top(
 //===============================================
 //              Internal Signals
 //==============================================
+//---------------Pre Stage Signals----------------
+logic [31:0] z_mapped; 
+logic [31:0] x_in_pre;
+logic [31:0] y_in_pre;
+logic reverse;
+logic eq_90;
+logic eq_neg_90;
+logic [31:0] x_in_sub;
+logic [31:0] y_in_sub;
 
 //---------------First Stage Signals--------------
 logic [31:0] x_sum_1to2;
@@ -105,6 +114,7 @@ logic [63:0] y_out_product;
 logic [31:0] x_out_pre;
 logic [31:0] y_out_pre;
 
+reg [95:0] stage_0_pre;
 reg [194:0] stage_0_1;
 reg [194:0] stage_1_2;
 reg [194:0] stage_2_3;
@@ -121,6 +131,14 @@ logic [31:0] scale_factor_delay [0:4];
 //===============================================
 //              Internal Signals
 //==============================================
+//--------------Register Stage_0_pre---------------------
+always_ff@(posedge clk or negedge rst_n) begin
+    if(!rst_n)
+        stage_0_pre <= 96'b0;  
+    else
+        stage_0_pre <= {x_in_sub, y_in_sub, z_mapped};
+end
+
 
 //--------------Register Stage_0_1---------------------
 always_ff@(posedge clk or negedge rst_n) begin
@@ -188,10 +206,34 @@ end
 //===============================================
 //                  Data Path
 //==============================================
+range_checking Range_Checking(
+       .z_in(z_in),
+       .eq_90_sign_sel(eq_90),
+       .eq_neg_90_sign_sel(eq_neg_90),
+       .reverse(reverse),
+       .z_mapped(z_mapped)
+);
+
+two_complementer reverse_X (
+    .data_in(x_in),
+    .enable(reverse | eq_neg_90), 
+    .data_out(x_in_pre)
+);
+
+two_complementer reverse_Y (
+    .data_in(y_in),
+    .enable(reverse | eq_90), 
+    .data_out(y_in_pre)
+);
+
+assign x_in_sub = (eq_90 | eq_neg_90) ? y_in_pre : x_in_pre;
+assign y_in_sub = (eq_90 | eq_neg_90) ? x_in_pre : y_in_pre;
+
+
 first_micro_rotation first_iteration(
-    .x_in(x_in),
-    .y_in(y_in),
-    .z_in(z_in),
+    .x_in(stage_0_pre[95:64]),
+    .y_in(stage_0_pre[63:32]),
+    .z_in(stage_0_pre[31:0]),
 
     .x_sum(x_sum_1to2),
     .x_carry(x_carry_1to2),
@@ -204,6 +246,12 @@ first_micro_rotation first_iteration(
 
     .select_function_0(selection_function_0)
 );
+
+/*
+assign x_out = x_sum_1to2 + x_carry_1to2;
+assign y_out = y_sum_1to2 + y_carry_1to2;
+assign angle_out = angle_sum_1to2 + angle_carry_1to2;
+*/
 
 second_micro_rotation second_iteration(
    
@@ -232,6 +280,12 @@ second_micro_rotation second_iteration(
     .select_function_1(selection_function_1)    
 );
 
+/*
+assign x_out = x_sum_2to3 + x_carry_2to3;
+assign y_out = y_sum_2to3 + y_carry_2to3;
+assign angle_out = angle_sum_2to3 + angle_carry_2to3;
+*/
+
 
 third_micro_rotation third_iteration(
    
@@ -259,7 +313,11 @@ third_micro_rotation third_iteration(
 
     .select_function_2(selection_function_2)
 );
-
+/*
+assign x_out = x_sum_3to4 + x_carry_3to4;
+assign y_out = y_sum_3to4 + y_carry_3to4;
+assign angle_out = angle_sum_3to4 + angle_carry_3to4;
+*/
 // =========================================================================
 // MICRO-ROTATION STAGES (4 TO 8)
 // =========================================================================
@@ -280,6 +338,12 @@ fourth_micro_rotation fourth_iteration(
     .z_carry_out(angle_carry_4to5)
 );
 
+/*
+assign x_out = x_sum_4to5 + x_carry_4to5;
+assign y_out = y_sum_4to5 + y_carry_4to5;
+assign angle_out = angle_sum_4to5 + angle_carry_4to5;
+*/
+
 fifth_micro_rotation fifth_iteration(
     .x_sum_in   (stage_3_4[31:0]), 
     .x_carry_in (stage_3_4[63:32]),
@@ -295,6 +359,12 @@ fifth_micro_rotation fifth_iteration(
     .z_sum_out  (angle_sum_5to6),
     .z_carry_out(angle_carry_5to6)
 );
+
+/*
+assign x_out = x_sum_5to6 + x_carry_5to6;
+assign y_out = y_sum_5to6 + y_carry_5to6;
+assign angle_out = angle_sum_5to6 + angle_carry_5to6;
+*/
 
 sixth_micro_rotation sixth_iteration(
     .x_sum_in   (stage_4_5[31:0]), 
@@ -312,6 +382,12 @@ sixth_micro_rotation sixth_iteration(
     .z_carry_out(angle_carry_6to7)
 );
 
+/*
+assign x_out = x_sum_6to7 + x_carry_6to7;
+assign y_out = y_sum_6to7 + y_carry_6to7;
+assign angle_out = angle_sum_6to7 + angle_carry_6to7;
+*/
+
 seventh_micro_rotation seventh_iteration(
     .x_sum_in   (stage_5_6[31:0]), 
     .x_carry_in (stage_5_6[63:32]),
@@ -327,6 +403,12 @@ seventh_micro_rotation seventh_iteration(
     .z_sum_out  (angle_sum_7to8),
     .z_carry_out(angle_carry_7to8)
 );
+
+/*
+assign x_out = x_sum_7to8 + x_carry_7to8;
+assign y_out = y_sum_7to8 + y_carry_7to8;
+assign angle_out = angle_sum_7to8 + angle_carry_7to8;
+*/
 
 eighth_micro_rotation eighth_iteration(
     .x_sum_in   (stage_6_7[31:0]), 
@@ -370,6 +452,7 @@ CLA_32bit CLA_angle_out(
     .sum(angle_out),
     .c_out()
 );
+
 
 scale_factor_LUT Scale_Factor_LUT(
     .select_function_0(stage_0_1[194:192]),

@@ -113,7 +113,7 @@ module scale_factor_LUT(
             9'b100_000_011: scale_factor_comp = 32'h003E0562; // d0=4, d1=0, d2=3 | C_float = 0.242270
             9'b100_000_100: scale_factor_comp = 32'h003DF7DC; // d0=4, d1=0, d2=4 | C_float = 0.242063
             9'b100_001_000: scale_factor_comp = 32'h003D9C13; // d0=4, d1=1, d2=0 | C_float = 0.240663
-            9'b100_001_001: scale_factor_comp = 32'h003D9A26; // d0=4, d1=1, d2=1 | C_float = 0.240633
+            9'b100_001_001: scale_factor_comp = 32'h003d9a26; // d0=4, d1=1, d2=1 | C_float = 0.240633
             9'b100_001_010: scale_factor_comp = 32'h003D9461; // d0=4, d1=1, d2=2 | C_float = 0.240545
             9'b100_001_011: scale_factor_comp = 32'h003D8AC6; // d0=4, d1=1, d2=3 | C_float = 0.240399
             9'b100_001_100: scale_factor_comp = 32'h003D7D5C; // d0=4, d1=1, d2=4 | C_float = 0.240194

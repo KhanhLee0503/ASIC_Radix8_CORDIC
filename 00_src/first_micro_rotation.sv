@@ -22,6 +22,8 @@ logic [31:0] angle_zero_out_n;
 
 logic [31:0] x0p1;
 logic [31:0] x0p2;
+logic [31:0] x0p1_n;
+logic [31:0] x0p2_n;
 
 logic [31:0] y0p1;
 logic [31:0] y0p2;
@@ -41,7 +43,7 @@ angle_table_zero angle_table_zero(
 
 two_complementer two_complementer_angle (
     .data_in(angle_zero_out),
-    .enable(1'b1), // Negate if select_function is negative
+    .enable(~select_function_pre[3]), // Negate if select_function is negative
     .data_out(angle_zero_out_n)
 );
 
@@ -72,13 +74,13 @@ shifter shifter_x (
 
 two_complementer two_complementer_y0p1 (
     .data_in(y0p1),
-    .enable(1'b1),
+    .enable(~select_function_pre[3]),
     .data_out(y0p1_n)
 );
 
 two_complementer two_complementer_y0p2 (
     .data_in(y0p2),
-    .enable(1'b1),
+    .enable(~select_function_pre[3]),
     .data_out(y0p2_n)
 );
 
@@ -102,9 +104,21 @@ shifter shifter_y (
     .carry_out(y0p2)
 );
 
+two_complementer two_complementer_x0p1 (
+    .data_in(x0p1),
+    .enable(select_function_pre[3]),
+    .data_out(x0p1_n)
+);
+
+two_complementer two_complementer_x0p2 (
+    .data_in(x0p2),
+    .enable(select_function_pre[3]),
+    .data_out(x0p2_n)
+);
+
 CSA_3to2_32bit CSA_Y (
-    .a_in(x0p1),
-    .b_in(x0p2),
+    .a_in(x0p1_n),
+    .b_in(x0p2_n),
     .c_in(y_in),
 
     .sum_out(y_sum),

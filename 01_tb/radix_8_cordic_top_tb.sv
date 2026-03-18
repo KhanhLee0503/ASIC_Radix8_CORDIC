@@ -1,5 +1,6 @@
 `timescale 1ns/1ns
 module radix_8_cordic_top_tb;
+
 logic clk;
 logic rst_n;
 
@@ -21,163 +22,208 @@ reg [31:0] total_x;
 reg [31:0] total_y;
 reg [31:0] total_z;
 
+//////////////////////////////////////////////////////
+// Clock
+//////////////////////////////////////////////////////
 
 initial begin
-    clk = 1'b0;
-    forever begin
-        #5 clk = ~clk;
-    end
+    clk = 0;
+    forever #5 clk = ~clk;
 end
 
+//////////////////////////////////////////////////////
+// Q8.24 → REAL converter
+//////////////////////////////////////////////////////
+
+function real fxp_to_real(input [31:0] value);
+
+    reg [31:0] tmp;
+
+    begin
+        if(value[31]) begin
+            tmp = ~value + 1;
+            fxp_to_real = -$itor(tmp) / (2.0**24);
+        end
+        else begin
+            fxp_to_real = $itor(value) / (2.0**24);
+        end
+    end
+
+endfunction
+
+
+//////////////////////////////////////////////////////
+// TEST TASK
+//////////////////////////////////////////////////////
+
+task run_test
+(
+    input string test_name,
+    input [31:0] x_val,
+    input [31:0] y_val,
+    input [31:0] z_val
+);
+
+begin
+
+    $display(" ");
+    $display("---------------------------------------------------");
+    $display("%s", test_name);
+    $display("---------------------------------------------------");
+
+    x_in = x_val;
+    y_in = y_val;
+    z_in = z_val;
+
+    #100;
+
+    x_real = fxp_to_real(x_out);
+    y_real = fxp_to_real(y_out);
+    z_real = fxp_to_real(angle_out);
+
+    $display("X HEX : %h", x_out);
+    $display("Y HEX : %h", y_out);
+    $display("Z HEX : %h", angle_out);
+
+    $display("X REAL : %0.10f", x_real);
+    $display("Y REAL : %0.10f", y_real);
+    $display("Z REAL : %0.10f", z_real);
+
+end
+
+endtask
+
+
+//////////////////////////////////////////////////////
+// TEST SEQUENCE
+//////////////////////////////////////////////////////
 
 initial begin
-    x_in = 32'h0;
-    y_in = 32'h0;
-    z_in = 32'h0;
-    rst_n = 1'b0;
+
+    x_in = 0;
+    y_in = 0;
+    z_in = 0;
+
+    rst_n = 0;
     #10;
-    rst_n = 1'b1;
+    rst_n = 1;
 
-    $display("-------------------Test 1: X = 0.5, Y = 0.5, Z = 60 degree (1.047197551)------------------");
-    #10;
-    x_in = 32'h0080_0000; // 0.5 in Q8.24 format
-    y_in = 32'h0080_0000; // 0.5 in Q8.24 format
-    z_in = 32'h010c1523; // 60 degrees in Q8.24 format
+    #100;
 
+    //////////////////////////////////////////////////////
+    // BASIC TEST
+    //////////////////////////////////////////////////////
+    run_test("T1: (0.5,0.5) rotate 0 deg",
+             32'h00800000,
+             32'h00800000,
+             32'h00000000);
 
-   #100; 
-    
-    $display("X Value: %h", x_out);
-   
-        if(x_out[31] == 1'b1) begin
-            total_x = ~x_out + 1; // Convert to positive for real conversion 
-            x_real = -$itor(total_x) / (2.0**24); 
-        end else begin
-            total_x = x_out; // Keep as is for real conversion
-            x_real = $itor(total_x) / (2.0**24); 
-        end
+    run_test("T2: (0.5,0.5) rotate 60 deg",
+             32'h00800000,
+             32'h00800000,
+             32'h010C1523);
 
-    $display("==> Final X : %0.10f", x_real); 
-    
-    $display("Y Value: %h", y_out);
-   
-        if(y_out[31] == 1'b1) begin
-            total_y = ~y_out + 1; // Convert to positive for real conversion 
-            y_real = -$itor(total_y) / (2.0**24); 
-        end else begin
-            total_y = y_out; // Keep as is for real conversion
-            y_real = $itor(total_y) / (2.0**24); 
-        end
+    run_test("T3: (0.5,0.5) rotate -60 deg",
+             32'h00800000,
+             32'h00800000,
+             32'hFEF3EADC);
 
-    $display("==> Final Y : %0.10f", y_real);
+    //////////////////////////////////////////////////////
+    // MEDIUM ANGLES (radix-8 stress)
+    //////////////////////////////////////////////////////
+    run_test("T4: (0.3,0.7) rotate 45 deg",
+             32'h004CCCCD,
+             32'h00B33333,
+             32'h00C90FDB);
 
-    $display("Angle Value: %h", angle_out);
-   
-        if(angle_out[31] == 1'b1) begin
-            total_z = ~angle_out + 1; // Convert to positive for real conversion 
-            z_real = -$itor(total_z) / (2.0**24); 
-        end else begin
-            total_z = angle_out; // Keep as is for real conversion
-            z_real = $itor(total_z) / (2.0**24); 
-        end
+    run_test("T5: (0.3,0.7) rotate -45 deg",
+             32'h004CCCCD,
+             32'h00B33333,
+             32'hFF36F025);
 
-    $display("==> Final Angle : %0.10f", z_real);
+    run_test("T6: (0.8,0.2) rotate 30 deg",
+             32'h00CCCCCD,
+             32'h00333333,
+             32'h00860A92);
 
+    run_test("T7: (0.8,0.2) rotate -30 deg",
+             32'h00CCCCCD,
+             32'h00333333,
+             32'hFF79F56E);
 
-//---------------------------------------------------------------------------------
-    $display(" ");
-    $display("-------------------Test 2: X = 6.3, Y = 7.7, Z = 45 degree (0.7853981634)------------------");
-    #10;
-    x_in = 32'h064CCCCD; // 6.3 in Q8.24 format
-    y_in = 32'h07B33333; // 7.7 in Q8.24 format 
-    z_in = 32'h00C90FDB; // 45 degrees in Q8.24 format
+    //////////////////////////////////////////////////////
+    // SMALL ANGLES (precision test)
+    //////////////////////////////////////////////////////
+    run_test("T8: (1,0) rotate 1 deg",
+             32'h01000000,
+             32'h00000000,
+             32'h000477D1);
+
+    run_test("T9: (1,0) rotate -1 deg",
+             32'h01000000,
+             32'h00000000,
+             32'hFFFB882F);
+
+    //////////////////////////////////////////////////////
+    // EDGE CASE (near 90 deg)
+    //////////////////////////////////////////////////////
+    run_test("T10: (0.5,0.5) rotate 89 deg",
+             32'h00800000,
+             32'h00800000,
+             32'h018DB6A0);
+
+    run_test("T11: (0.5,0.5) rotate -89 deg",
+             32'h00800000,
+             32'h00800000,
+             32'hFE724960);
+
+    run_test("T12: (1,0) rotate 90 deg",
+             32'h01000000,
+             32'h00000000,
+             32'h01921FB5);
+
+    run_test("T13: (1,0) rotate -90 deg",
+             32'h01000000,
+             32'h00000000,
+             32'hFE6DE04B);
+
+    //////////////////////////////////////////////////////
+    // RANDOM (realistic ASIC usage)
+    //////////////////////////////////////////////////////
+    run_test("T14: (0.6,-0.4) rotate 60 deg",
+             32'h0099999A,
+             32'hFF99999A,
+             32'h010C1523);
+
+    run_test("T15: (-0.5,0.5) rotate 30 deg",
+             32'hFF800000,
+             32'h00800000,
+             32'h00860A92);
+
+ 
+    run_test("T16: (0.6,-0.4) rotate 120 deg",
+             32'h0099999A,
+             32'hFF99999A,
+             32'h02182a47);  
   
+    run_test("T17: (-0.5,0.5) rotate -100 deg",
+             32'hFF800000,
+             32'h00800000,
+             32'hfe41321a);  
     
-    #100; 
-    $display("X Value: %h", x_out);
-   
-        if(x_out[31] == 1'b1) begin
-            total_x = ~x_out + 1; // Convert to positive for real conversion 
-            x_real = -$itor(total_x) / (2.0**24); 
-        end else begin
-            total_x = x_out; // Keep as is for real conversion
-            x_real = $itor(total_x) / (2.0**24); 
-        end
+    run_test("T18: (0.6, -0.4) rotate 180 deg",
+             32'h0099999A,
+             32'hFF99999A,
+             32'h03243f6b);  
+  
+    run_test("T19: (0.6, -0.4) rotate -180 deg",
+             32'h0099999A,
+             32'hFF99999A,
+             32'hfcdbc095);  
+             
+    #200;
+    $finish;
 
-    $display("==> Final X : %0.10f", x_real); 
-    
-    $display("Y Value: %h", y_out);
-   
-        if(y_out[31] == 1'b1) begin
-            total_y = ~y_out + 1; // Convert to positive for real conversion 
-            y_real = -$itor(total_y) / (2.0**24); 
-        end else begin
-            total_y = y_out; // Keep as is for real conversion
-            y_real = $itor(total_y) / (2.0**24); 
-        end
-
-    $display("==> Final Y : %0.10f", y_real);
-   
-    $display("Angle Value: %h", angle_out);
-   
-        if(angle_out[31] == 1'b1) begin
-            total_z = ~angle_out + 1; // Convert to positive for real conversion 
-            z_real = -$itor(total_z) / (2.0**24); 
-        end else begin
-            total_z = angle_out; // Keep as is for real conversion
-            z_real = $itor(total_z) / (2.0**24); 
-        end
-
-    $display("==> Final Angle : %0.10f", z_real);
-
-
-//------------------------------------------------------------------------------------------------------------
-
-    $display(" ");
-    $display("-------------------Test 3: X = 2.99, Y = 4.342, Z = 30 degree (0.5235987756)------------------");
-    #10;
-    x_in = 32'h02FD70A4; // 2.99 in Q8.24 format
-    y_in = 32'h04578D50; // 4.342 in Q8.24 format 
-    z_in = 32'h00860a92; // 30 degrees in Q8.24 format
-
- 
-    #100; 
-    $display("X Value: %h", x_out);
-   
-        if(x_out[31] == 1'b1) begin
-            total_x = ~x_out + 1; // Convert to positive for real conversion 
-            x_real = -$itor(total_x) / (2.0**24); 
-        end else begin
-            total_x = x_out; // Keep as is for real conversion
-            x_real = $itor(total_x) / (2.0**24); 
-        end
-
-    $display("==> Final X : %0.10f", x_real); 
-    
-    $display("Y Value: %h", y_out);
-   
-        if(y_out[31] == 1'b1) begin
-            total_y = ~y_out + 1; // Convert to positive for real conversion 
-            y_real = -$itor(total_y) / (2.0**24); 
-        end else begin
-            total_y = y_out; // Keep as is for real conversion
-            y_real = $itor(total_y) / (2.0**24); 
-        end
-
-    $display("==> Final Y : %0.10f", y_real);
- 
-    $display("Angle Value: %h", angle_out);
-   
-        if(angle_out[31] == 1'b1) begin
-            total_z = ~angle_out + 1; // Convert to positive for real conversion 
-            z_real = -$itor(total_z) / (2.0**24); 
-        end else begin
-            total_z = angle_out; // Keep as is for real conversion
-            z_real = $itor(total_z) / (2.0**24); 
-        end
-
-    $display("==> Final Angle : %0.10f", z_real);
-
-   end
+end
 
 endmodule

@@ -39,7 +39,7 @@ end
 barrel_right_shifter_32bit shifter_sum (
     .data_in(mux1_out),
     .sh_amt(sh_amt),
-    .shift_in(data_in[DATA_WIDTH-1]), // Shift in the sign bit for arithmetic right shift
+    .shift_in(mux1_out[DATA_WIDTH-1]), // Shift in the sign bit for arithmetic right shift
     .data_out(sum_out)
 );
 
